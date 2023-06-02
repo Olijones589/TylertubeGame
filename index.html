@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<style>
+    .onlyClickable {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    .unselectable {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        pointer-events: none;
+    }
+
+    .picklesText {
+        font-size: 250%;
+        position: fixed;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #161616;
+        font-family: "Arial", sans-serif;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        letter-spacing: 2px;
+        font-weight: bold;
+    }
+
+    @keyframes bounce {
+        0% {
+            transform: scale(1) translate(-50%, -50%);
+        }
+        10% { 
+            transform: scale(1.1) translate(-45%, -45%);
+        }
+        100% {
+            transform: scale(1) translate(-50%, -50%);
+        }
+    }
+
+    .tyler {
+        width: 20%;
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+
+    .bounce-animation {
+        animation: bounce 0.1s both;
+    }
+
+    .background {
+        z-index: -1;
+        position: fixed;
+        top: -75%;
+        left: -75%;
+        width: 250%;
+        height: 250%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .item {
+            position: absolute;
+            transition: top 2s linear;
+    }
+
+    body {
+            overflow: hidden;
+    }
+
+    .container {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background-color: lightgray;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+    }
+
+    .toggle-button {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: none;
+        background-color: lightblue;
+        color: white;
+        margin-right: 10px;
+    }
+
+    .content {
+        display: none;
+    }
+
+    #ahamazone-dialog {
+  width: 400px;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#ahamazone-dialog h1 {
+  font-size: 24px;
+  margin-top: 0;
+}
+
+#ahamazone-product-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+#ahamazone-product-list li {
+  margin-bottom: 10px;
+}
+
+#ahamazone-dialog button {
+  display: block;
+  margin: 0 auto;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#ahamazone-dialog button:hover {
+  background-color: #0069d9;
+}
+
+.video-maker {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.video-maker h1 {
+  text-align: center;
+}
+
+.upload-section {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.upload-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.upload-button:hover {
+  background-color: #0069d9;
+}
+
+.preview-section {
+  text-align: center;
+}
+
+.video-preview {
+  width: 100%;
+  max-height: 400px;
+  margin-top: 20px;
+  background-color: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.yootube-close {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #ff0000;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.yootube-close:hover {
+  background-color: #cc0000;
+}
+
+</style>
+<body>
+    <img id="background" src="sunburst.png" class="background unselectable"></img>
+    <p id="picklesText" class="picklesText unselectable"></p>
+    <img id="tyler" class="tyler onlyClickable" src="tyler.jpg" draggable="false" unselectable="on"></img>
+    <div id="pickleMultiplier" class="onlyClickable" draggable="false" unselectable="on" style="border-radius: 10px; background-color: #e97451; padding: 10px; display: inline-flex; align-items: center; opacity: 0;">
+        <img src="2xpickle.png" style="width: 100px; height: 50px; margin-right: 10px;">
+        <p id="pickleMultiplierTimeLeftText" style="white-space: pre">2X Pickles</p>
+        <br>
+    </div>
+    <div class="container">
+        <div class="header">
+            <button class="toggle-button">+</button>
+        </div>
+        <div class="content">
+            <button onclick="visitAhamazone();">Visit Ahmazone</button>
+            <button id="make-a-video">Make a video</button>
+        </div>
+    </div>
+    <dialog id="video-maker-dialog">
+        <div class="video-maker">
+          <h1>Yootube</h1>
+          <button onclick="videoMakerDialog.close();" class="yootube-close">Close</button>
+          </div>
+        </div>
+      </dialog>
+</body>
+<script>
+    var pickleMultiplier = document.getElementById('pickleMultiplier');
+    var pickleMultiplierTimeLeftText = document.getElementById('pickleMultiplierTimeLeftText');
+
+    var toggleButton = document.querySelector('.toggle-button');
+        var content = document.querySelector('.content');
+
+        toggleButton.addEventListener('click', function() {
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggleButton.textContent = '-';
+            } else {
+                content.style.display = 'none';
+                toggleButton.textContent = '+';
+            }
+        });
+
+    picklesText.innerText = '0 pickles';
+    const tyler = document.getElementById('tyler');
+    let tylerAnimationDone = true;
+    let pickleMultiplierTimeLeft = 0;
+    var pickles = 0;
+
+    // Add the functionality
+    function update() {
+        picklesText.innerText = `${pickles} pickles`;
+        localStorage.setItem('save', 
+            `${btoa(pickles)} `
+        );
+    }
+    function load() {
+        if(localStorage.getItem('save') === null) {
+            return undefined;
+        }
+        const saveData = localStorage.getItem('save').split(' ');
+        pickles = parseInt(atob(saveData[0]));
+
+        picklesText.innerText = `${pickles} pickles`;
+    }
+    async function spawnPickle() {
+        var pickle = document.createElement('img');
+        pickle.src = 'pickle.png';
+        pickle.className = 'item unselectable';
+        pickle.style.opacity = '0';
+        var x = Math.floor(Math.random() * window.innerWidth-360);
+        pickle.style.left = x + 'px';
+        pickle.style.top = '0';
+        document.body.appendChild(pickle);
+        setTimeout(function() {
+            pickle.style.opacity = '0.5';
+            pickle.style.top = window.innerHeight + 'px';
+            setTimeout(function() {
+                pickle.remove();
+            }, 2000);
+        }, 100);
+    }
+    async function tylerAnimation() {
+        if(!tylerAnimationDone) {
+            tyler.classList.add("bounce-animation");
+            tyler.addEventListener("animationend", function() {
+                tyler.classList.remove("bounce-animation");
+                tylerAnimationDone = true;
+            });
+        }
+    }
+    async function spawnHotSauce() {
+        var hotSauce = document.createElement('img');
+        hotSauce.src = 'hotsauce.png';
+        hotSauce.className = 'item onlyClickable';
+        hotSauce.draggable = 'false';
+        hotSauce.unselectable = 'on';
+        var x = Math.floor(Math.random() * window.innerWidth-360);
+        hotSauce.style.left = x + 'px';
+        hotSauce.style.top  = '0px';
+        hotSauce.style.width  = '100px';
+        hotSauce.style.height  = '200px';
+        hotSauce.onclick = function() {
+            pickleMultiplierTimeLeft += 10;
+
+            hotSauce.remove();
+        }
+        document.body.appendChild(hotSauce);
+        setTimeout(function() {
+            hotSauce.style.top = window.innerHeight + 'px';
+            setTimeout(function() {
+                hotSauce.remove();
+            }, 2000);
+        }, 100);
+    }
+// Get the dialog element
+var videoMakerDialog = document.getElementById('video-maker-dialog');
+
+// Get the upload button
+var uploadButton = document.querySelector('.upload-button');
+
+// Get the button to trigger dialog opening
+var openButton = document.getElementById('make-a-video');
+
+// Add click event listener to the open button
+openButton.addEventListener('click', function() {
+    videoMakerDialog.showModal();
+});
+
+    function visitAhamazone() {
+  // Create a dialog element
+  var dialog = document.createElement('dialog');
+  dialog.id = 'ahamazone-dialog';
+
+  // Create a heading element
+  var heading = document.createElement('h1');
+  heading.textContent = 'Welcome to Ahamazone';
+
+  // Create a product list element
+  var productList = document.createElement('ul');
+  productList.id = 'ahamazone-product-list';
+
+  // Create some sample products
+  var products = [
+    { name: 'Product 1', price: '19' },
+    { name: 'Product 2', price: '29' },
+    { name: 'Product 3', price: '9' },
+    { name: 'Product 4', price: '39' },
+    { name: 'Product 5', price: '14' }
+  ];
+
+  // Add the products to the list
+  products.forEach(function(product) {
+    var item = document.createElement('li');
+    item.textContent = product.name + ' - ' + product.price + ' pickles';
+    productList.appendChild(item);
+  });
+
+  // Create a close button
+  var closeButton = document.createElement('button');
+  closeButton.textContent = 'Close';
+  closeButton.addEventListener('click', function() {
+    dialog.close();
+  });
+
+  // Append the heading, product list, and close button to the dialog
+  dialog.appendChild(heading);
+  dialog.appendChild(productList);
+  dialog.appendChild(closeButton);
+
+  // Append the dialog to the document body
+  document.body.appendChild(dialog);
+
+  // Show the dialog
+  dialog.showModal();
+}
+    async function eatPickleSFX() {
+        new Audio('pickle.mp3').play();
+    }
+    tyler.onclick = function() {
+        eatPickleSFX();
+        tylerAnimationDone = false;
+        if(pickleMultiplierTimeLeft !== 0) {
+            pickles += 2;
+        } else {
+           pickles += 1;
+        }
+        update();
+        spawnPickle();
+        tylerAnimation();
+    };
+
+    load();
+
+    // Background
+    var rotation = 0;
+    setInterval(function() {
+        rotation += 0.1; // Increase the rotation value by the desired amount
+        background.style.transform = "rotate(" + rotation + "deg)"; // Apply the rotation value to the transform property
+    }, 1); // Adjust the interval time (in milliseconds) to control the speed of rotation
+
+    setInterval(function() {
+        spawnHotSauce();
+    }, 6000);
+
+    setInterval(function() {
+        if(pickleMultiplierTimeLeft !== 0) {
+            pickleMultiplierTimeLeftText.textContent = `2X Pickles\n ${pickleMultiplierTimeLeft} Seconds left\n`;
+            pickleMultiplier.style.opacity = "1";
+        } else {
+            pickleMultiplier.style.opacity = "0";
+        }
+    }, 10);
+
+    setInterval(function() {
+        if(pickleMultiplierTimeLeft !== 0) {
+            pickleMultiplierTimeLeftText.textContent = `2X Pickles\n ${pickleMultiplierTimeLeft} Seconds left\n`;
+            pickleMultiplierTimeLeft -= 1;
+        }
+    }, 1000);
+</script>
