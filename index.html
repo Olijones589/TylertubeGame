@@ -18,8 +18,8 @@
         pointer-events: none;
     }
 
-    .picklesText {
-        font-size: 250%;
+    .fancyText {
+        font-size: 2.5em;
         position: fixed;
         top: 10%;
         left: 50%;
@@ -52,6 +52,8 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        border-radius: 10%;
+        min-width: 150px;
     }
 
 
@@ -61,19 +63,32 @@
 
     .background {
         z-index: -1;
-        position: fixed;
-        top: -75%;
-        left: -75%;
         width: 250%;
-        height: 250%;
-        object-fit: cover;
-        object-position: center;
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .sus-background {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        top: 50%;
+        left: 50%;
     }
 
     .item {
-            position: absolute;
-            transition: top 2s linear;
+        position: absolute;
+        transition: top 2s linear;
+        width: 20em;
+        aspect-ratio: 1/1;
     }
+
 
     body {
             overflow: hidden;
@@ -103,11 +118,7 @@
         color: white;
         margin-right: 10px;
     }
-
-    .content {
-        display: none;
-    }
-
+    
     #ahamazone-dialog {
   width: 400px;
   padding: 20px;
@@ -205,24 +216,25 @@
   background-color: #cc0000;
 }
 
+.clear-save {
+    background-color: red;
+}
+
 </style>
 <body>
     <img id="background" src="sunburst.png" class="background unselectable"></img>
-    <p id="picklesText" class="picklesText unselectable"></p>
+    <p id="picklesText" class="fancyText unselectable"></p>
+    <p id="moneyText" class="fancyText unselectable" style="top: 0%;left: 50%;">$0</p>
     <img id="tyler" class="tyler onlyClickable" src="tyler.jpg" draggable="false" unselectable="on"></img>
-    <div id="pickleMultiplier" class="onlyClickable" draggable="false" unselectable="on" style="border-radius: 10px; background-color: #e97451; padding: 10px; display: inline-flex; align-items: center; opacity: 0;">
-        <img src="2xpickle.png" style="width: 100px; height: 50px; margin-right: 10px;">
-        <p id="pickleMultiplierTimeLeftText" style="white-space: pre">2X Pickles</p>
-        <br>
-    </div>
     <div class="container">
-        <div class="header">
-            <button class="toggle-button">+</button>
-        </div>
-        <div class="content">
-            <button onclick="visitAhamazone();">Visit Ahmazone</button>
-            <button id="make-a-video">Make a video</button>
-        </div>
+        <div id="pickleMultiplier" class="onlyClickable" draggable="false" unselectable="on" style="border-radius: 10px; background-color: #e97451; padding: 10px; display: inline-flex; align-items: center; display: none;">
+            <img src="2xpickle.png" style="width: 100px; height: 50px; margin-right: 20%;">
+            <p id="pickleMultiplierTimeLeftText" style="white-space: pre;width: 35%;border: none;padding: 0; margin: 0;">2X Pickles</p>
+        </div><br>
+        <button onclick="visitAhamazone();">Visit Ahmazone</button>
+        <button id="make-a-video">Make a video</button>
+        <button onclick="pickle2Money();">Pickle 2 Money (10 pickle = $1)</button>
+        <button class="clear-save" onclick="if(confirm('Are you sure?')) { clearSave(); }">Clear Save</button>
     </div>
     <dialog id="video-maker-dialog">
         <div class="video-maker">
@@ -233,23 +245,26 @@
       </dialog>
 </body>
 <script>
+    const sus = new Audio('sus.mp3');
+    const checkOccurrence = (array, element) => {
+        let counter = 0;
+        for (item of array.flat()) {
+            if (item == element) {
+                counter++;
+            }
+        };
+        return counter
+    };
+    const moneySFX = new Audio('money.mp3');
+    const noSFX = new Audio('no.mp3');
+    const moneyText = document.getElementById('moneyText');
+    var money = 0;
+    var purchased = [];
+    var pickleCapacity = 20;
     var pickleMultiplier = document.getElementById('pickleMultiplier');
     var pickleMultiplierTimeLeftText = document.getElementById('pickleMultiplierTimeLeftText');
 
-    var toggleButton = document.querySelector('.toggle-button');
-        var content = document.querySelector('.content');
-
-        toggleButton.addEventListener('click', function() {
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                toggleButton.textContent = '-';
-            } else {
-                content.style.display = 'none';
-                toggleButton.textContent = '+';
-            }
-        });
-
-    picklesText.innerText = '0 pickles';
+    picklesText.innerText = `0 / ${pickleCapacity} pickles`;
     const tyler = document.getElementById('tyler');
     let tylerAnimationDone = true;
     let pickleMultiplierTimeLeft = 0;
@@ -257,9 +272,16 @@
 
     // Add the functionality
     function update() {
-        picklesText.innerText = `${pickles} pickles`;
+        pickleCapacity = checkOccurrence(purchased, 'bs') + (checkOccurrence(purchased, 'sc') * 5) + 20;
+        if(checkOccurrence(purchased, 'ag')) {
+            picklesText.innerText = `${pickles} / ${pickleCapacity} sus`;
+            moneyText.innerText = `${Math.round(money)} imposters`;
+        } else {
+            picklesText.innerText = `${pickles} / ${pickleCapacity} pickles`;
+            moneyText.innerText = '$'+`${Math.round(money*10)/10}`;
+        }
         localStorage.setItem('save', 
-            `${btoa(pickles)} `
+            `${btoa(pickles)} ${btoa(money)} ${btoa(JSON.stringify(purchased))}  `
         );
     }
     function load() {
@@ -268,12 +290,18 @@
         }
         const saveData = localStorage.getItem('save').split(' ');
         pickles = parseInt(atob(saveData[0]));
+        money = parseFloat(atob(saveData[1]));
+        purchased = JSON.parse(atob(saveData[2]));
 
-        picklesText.innerText = `${pickles} pickles`;
+        update();
     }
     async function spawnPickle() {
         var pickle = document.createElement('img');
-        pickle.src = 'pickle.png';
+        if(checkOccurrence(purchased, 'ag')) {
+            pickle.src = 'sus.jpeg';
+        } else {
+            pickle.src = 'pickle.png';
+        }
         pickle.className = 'item unselectable';
         pickle.style.opacity = '0';
         var x = Math.floor(Math.random() * window.innerWidth-360);
@@ -282,7 +310,7 @@
         document.body.appendChild(pickle);
         setTimeout(function() {
             pickle.style.opacity = '0.5';
-            pickle.style.top = window.innerHeight + 'px';
+            pickle.style.top = `calc(100% - 5em)`;
             setTimeout(function() {
                 pickle.remove();
             }, 2000);
@@ -309,7 +337,7 @@
         hotSauce.style.width  = '100px';
         hotSauce.style.height  = '200px';
         hotSauce.onclick = function() {
-            pickleMultiplierTimeLeft += 10;
+            pickleMultiplierTimeLeft += Math.floor(Math.random() * 10) + 10;
 
             hotSauce.remove();
         }
@@ -320,6 +348,23 @@
                 hotSauce.remove();
             }, 2000);
         }, 100);
+    }
+    function clearSave() {
+        pickles = 0;
+        money = 0;
+        if(checkOccurrence(purchased, 'ag')) {
+            purchased = ['ag'];
+        } else {
+            purchased = [];
+        }
+        update();
+        location.reload();
+    }
+    function pickle2Money() {
+        moneySFX.play();
+        money += pickles / 10;
+        pickles = 0;
+        update();
     }
 // Get the dialog element
 var videoMakerDialog = document.getElementById('video-maker-dialog');
@@ -350,18 +395,37 @@ openButton.addEventListener('click', function() {
 
   // Create some sample products
   var products = [
-    { name: 'Product 1', price: '19' },
-    { name: 'Product 2', price: '29' },
-    { name: 'Product 3', price: '9' },
-    { name: 'Product 4', price: '39' },
-    { name: 'Product 5', price: '14' }
+    { name: 'Gary', price: '100', img: 'gary.png', realName: 'g' },
+    { name: 'Storage Container', price: '50', img: null, realName: 'sc' },
+    { name: 'Beard Storage', price: '25', img: null, realName: 'bs' },
+    { name: 'Amo gus', price: '99999999', img: null, realName: 'ag' }
   ];
 
   // Add the products to the list
   products.forEach(function(product) {
-    var item = document.createElement('li');
-    item.textContent = product.name + ' - ' + product.price + ' pickles';
-    productList.appendChild(item);
+    var buy = document.createElement('button');
+    if(checkOccurrence(purchased, 'ag')) {
+        buy.textContent = 'Sus out ' + product.name + ' for ' + product.price + ' imposters';
+    } else {
+        buy.textContent = 'Buy ' + product.name + ' - $' + product.price;
+    }
+    if(product.img !== null) {
+        var imgContainer = document.createElement('img');
+        imgContainer.src = product.img;
+        imgContainer.width = 100;
+        imgContainer.height = 100;
+        buy.appendChild(imgContainer);
+    }
+    buy.onclick = function() {
+        if(money >= product.price) {
+            money -= parseInt(product.price);
+            purchased.push(product.realName);
+            update();
+        } else {
+            noSFX.play();
+        }
+    }
+    productList.appendChild(buy);
   });
 
   // Create a close button
@@ -369,6 +433,7 @@ openButton.addEventListener('click', function() {
   closeButton.textContent = 'Close';
   closeButton.addEventListener('click', function() {
     dialog.close();
+    dialog.remove();
   });
 
   // Append the heading, product list, and close button to the dialog
@@ -386,41 +451,77 @@ openButton.addEventListener('click', function() {
         new Audio('pickle.mp3').play();
     }
     tyler.onclick = function() {
-        eatPickleSFX();
-        tylerAnimationDone = false;
-        if(pickleMultiplierTimeLeft !== 0) {
-            pickles += 2;
-        } else {
-           pickles += 1;
+        if(pickles < pickleCapacity) {
+            eatPickleSFX();
+            tylerAnimationDone = false;
+            if(pickleMultiplierTimeLeft !== 0) {
+                pickles += 2;
+            } else {
+                pickles += 1;
+            }
+            update();
+            spawnPickle();
+            tylerAnimation();
         }
-        update();
-        spawnPickle();
-        tylerAnimation();
     };
 
     load();
+    update();
 
-    // Background
-    var rotation = 0;
+    let rotation = 0;
+
+    function rotateBackground() {
+        rotation += 0.1;
+        background.style.transform = "translate(-50%, -50%) rotate(" + rotation + "deg)";
+  
+        requestAnimationFrame(rotateBackground);
+    }
+
     setInterval(function() {
-        rotation += 0.1; // Increase the rotation value by the desired amount
-        background.style.transform = "rotate(" + rotation + "deg)"; // Apply the rotation value to the transform property
-    }, 1); // Adjust the interval time (in milliseconds) to control the speed of rotation
+        if(checkOccurrence(purchased, 'ag')) {
+            rotation = 0;
+            background.classList = ['sus-background', 'unselectable'];
+            background.style.transform = ""; // Apply the rotation value to the transform property
+        } else {
+            rotation += 0.32; // Increase the rotation value by the desired amount
+            background.style.transform = "translate(-50%, -50%) rotate(" + rotation + "deg)"; // Apply the rotation value to the transform property
+        }
+    }, 32); // Adjust the interval time (in milliseconds) to control the speed of rotation
 
     setInterval(function() {
         spawnHotSauce();
-    }, 6000);
+    }, 60000);
 
     setInterval(function() {
+        if(pickles > pickleCapacity) {
+            pickles = pickleCapacity;
+            update();
+        }
         if(pickleMultiplierTimeLeft !== 0) {
             pickleMultiplierTimeLeftText.textContent = `2X Pickles\n ${pickleMultiplierTimeLeft} Seconds left\n`;
-            pickleMultiplier.style.opacity = "1";
+            pickleMultiplier.style.display = "";
+            background.style.filter = "sepia(60%)";
         } else {
-            pickleMultiplier.style.opacity = "0";
+            pickleMultiplier.style.display = "none";
+            background.style.filter = "";
         }
     }, 10);
 
     setInterval(function() {
+        if(checkOccurrence(purchased, 'ag')) {
+            sus.volume = 1;
+            sus.play();
+            sus.playbackRate = 2;
+            tyler.src = 'amogus.jpg';
+            background.src = 'susbackground.jpg';
+        }
+        if(pickles < pickleCapacity) {
+            pickles += checkOccurrence(purchased, 'g') * 5;
+            if(pickles > pickleCapacity) {
+                pickles = pickleCapacity;
+            }
+            update();
+        }
         if(pickleMultiplierTimeLeft !== 0) {
             pickleMultiplierTimeLeftText.textContent = `2X Pickles\n ${pickleMultiplierTimeLeft} Seconds left\n`;
             pickleMultiplierTimeLeft -= 1;
